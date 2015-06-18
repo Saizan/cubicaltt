@@ -254,6 +254,8 @@ sndVal u               = error $ "sndVal: " ++ show u ++ " is not neutral."
 
 outVal :: Val -> Val
 outVal (Ter (In _ _ b sys) rho) = eval rho b
+outVal (VTrans (VPath i (VNu f)) v) = trans i (f `app` VNu f) (outVal v)
+outVal (VComp (VNu f) u ts)  = compLine (f `app` VNu f) (outVal u) (Map.map outVal ts)
 outVal v | isNeutral v          = VOut v
 outVal u               = error $ "outVal: " ++ show u ++ " is not neutral."
 
@@ -333,6 +335,7 @@ trans i v0 v1 = case (v0,v1) of  -- v0 is a type dep. on i,  v1 is in v0(i 0)
         comp_u2 = trans i (app f fill_u1) u2
     in VPair ui1 comp_u2
   (VPi{},_) -> VTrans (VPath i v0) v1
+  (VNu{},_) -> VTrans (VPath i v0) v1
   (Ter (Sum _ _ nass) env,VCon c us) -> case lookupLabel c nass of
     Just as -> VCon c $ transps i as env us
     Nothing -> error $ "trans: missing constructor " ++ c ++ " in " ++ show v0
@@ -436,6 +439,7 @@ comp i a u ts = case a of
           ui1        = comp i a u1 t1s
           comp_u2    = genComp i (app f fill_u1) u2 t2s
   VPi{} -> VComp a u (Map.map (VPath i) ts)
+  VNu{} -> VComp a u (Map.map (VPath i) ts)
   VU -> VComp VU u (Map.map (VPath i) ts)
   _ | isNeutral w -> w
     where w = VComp a u (Map.map (VPath i) ts)
