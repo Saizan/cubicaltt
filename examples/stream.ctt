@@ -37,5 +37,7 @@ zeros : Stream nat
   = In (zero , zeros) []
 
 
-foo (x : U) : U
- = x
+bisim (A : U) (R : (x y : Stream A) -> U) (ht : (x y : Stream A) -> R x y -> Id A (head A x) (head A y))
+              (pt : (x y : Stream A) -> R x y -> R (tail A x) (tail A y))
+              (x y : Stream A) (r : R x y) : Id (Stream A) x y
+ .@ i = In (ht x y r @ i , bisim A R ht pt (tail A x) (tail A y) (pt x y r) @ i) [ (i=0) -> x, (i=1) -> y]
