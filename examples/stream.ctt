@@ -1,0 +1,41 @@
+module stream where
+
+import prelude
+import nat
+
+
+Stream (A : U) : U
+  = Nu (\ (X : U) -> and A X)
+
+cons (A : U) (x : A) (xs : Stream A) : Stream A
+  = In (x , xs) []
+
+
+head (A : U) (xs : Stream A) : A
+  = (out xs).1
+
+tail (A : U) (xs : Stream A) : Stream A
+  = (out xs).2
+
+eta (A : U) (xs : Stream A) : Id (Stream A) (cons A (head A xs) (tail A xs)) xs
+ .@ i = In (out xs) [ (i=0) -> (cons A (head A xs) (tail A xs)) , (i = 1) -> xs ]
+
+caseS (A : U) (P : Stream A -> U) (p : (n : A) (s : Stream A) -> P (cons A n s)) (s : Stream A) : P s
+  = transport (<i> P (eta A s @ i)) (p (head A s) (tail A s))
+
+splitS (A : U) (s : Stream A) (P : Stream A -> U) (p : (n : A) (s : Stream A) -> P (cons A n s)) : P s
+  = transport (<i> P (eta A s @ i)) (p (head A s) (tail A s))
+
+map (f : nat -> nat) (s : Stream nat) : (Stream nat)
+ = In (f (head nat s) , map f (tail nat s)) []
+
+
+mapid (s : Stream nat) : Id (Stream nat) (map (\ (x : nat) -> x) s) s
+ .@ i = In (head nat s , mapid (tail nat s) @ i) [ (i=0) -> map (\ (x : nat) -> x) s, (i=1) -> s ]
+
+zeros : Stream nat
+  = In (zero , zeros) []
+
+
+foo (x : U) : U
+ = x
