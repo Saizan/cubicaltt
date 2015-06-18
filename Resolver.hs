@@ -297,6 +297,11 @@ resolveDecl d = case d of
     brs' <- local (insertVars (f:vars)) (mapM resolveBranch brs)
     body <- lams tele' (return $ CTT.Split f loc ty brs')
     return ((f,(a,body)),[(f,Variable)])
+  DeclAt (AIdent (l,f)) tele t i body -> do
+    let tele' = flattenTele tele
+    a <- binds CTT.Pi tele' (resolveExp t)
+    d <- lams tele' (path i (local (insertVar f) $ resolveExp body))
+    return ((f,(a,d)),[(f,Variable)])
   DeclUndef (AIdent (l,f)) tele t -> do
     let tele' = flattenTele tele
     a <- binds CTT.Pi tele' (resolveExp t)
