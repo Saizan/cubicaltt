@@ -348,7 +348,7 @@ showTer v = case v of
   U                  -> char 'U'
   App e0 e1          -> showTer e0 <+> showTer1 e1
   Pi e0              -> text "Pi" <+> showTer e0
-  Lam x t e          -> char '\\' <> parens (text x <+> colon <+> showTer t) <+>
+  Lam x t e          -> text "\\ " <> parens (text x <+> colon <+> showTer t) <+>
                           text "->" <+> showTer e
   Fst e              -> showTer1 e <> text ".1"
   Snd e              -> showTer1 e <> text ".2"
@@ -417,7 +417,7 @@ showVal v = case v of
   VPair u v         -> parens (showVal u <> comma <> showVal v)
   VSigma u v        -> text "Sigma" <+> showVals [u,v]
   VApp u v          -> showVal u <+> showVal1 v
-  VLam{}            -> text "\\(" <> showLam v
+  VLam{}            -> text "\\ (" <> showLam v
   VPath{}           -> char '<' <> showPath v
   VSplit u v        -> showVal u <+> showVal1 v
   VVar x _          -> text x
