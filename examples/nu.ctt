@@ -1,0 +1,26 @@
+module nu where
+
+import prelude
+
+top : U
+   = Nu (\ (X : U) -> X)
+
+t1 : Nu (\ (X : U) -> X)
+   = In t1 []
+
+t2 : Nu (\ (X : U) -> X)
+   = In t2 []
+
+-- fails
+-- t1t2 : Id top t1 t2
+--   .@ i = In (t1t2 @ -i) [ (i=0) -> t1, (i = 1) -> t2 ]
+-- t1t2 : Id top t1 t2
+--   .@ i = In (t1t2 @ i) [ (i=0) -> t2, (i = 1) -> t1 ]
+-- t1t2 : Id top t1 t2
+--   .@ i = t1
+
+t1t2 : Id top t1 t2
+  .@ i = In (t1t2 @ i) [ (i=0) -> t1, (i = 1) -> t2 ]
+
+cong (A : U) (B : U) (f : A -> B) (x y : A) (p : Id A x y) : Id B (f x) (f y)
+  = <i> f (p @ i)
