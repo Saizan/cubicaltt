@@ -17,6 +17,8 @@ DeclData.   Decl ::= "data" AIdent [Tele] "=" [Label] ;
 DeclSplit.  Decl ::= AIdent [Tele] ":" Exp "=" "split" "{" [Branch] "}" ;
 DeclUndef.  Decl ::= AIdent [Tele] ":" Exp "=" "undefined" ;
 DeclAt.     Decl ::= AIdent [Tele] ":" Exp ".@" AIdent "=" Exp ;
+DeclAtIn.   Decl ::= AIdent [Tele] ":" Exp ".@" AIdent "=" "In" Exp System ;
+DeclIn.     Decl ::= AIdent [Tele] ":" Exp "=" "In" Exp System  ;
 -- DeclMutual. Decl ::= "mutual" "{" [Decl] "}" ;
 separator   Decl ";" ;
 
@@ -31,7 +33,9 @@ Pi.           Exp1 ::= [PTele] "->" Exp1 ;
 Sigma.        Exp1 ::= [PTele] "*" Exp1 ;
 AppFormula.   Exp2 ::= Exp2 "@" Formula ;
 App.          Exp2 ::= Exp2 Exp3 ;
+Out.          Exp2 ::= "out" Exp3 ;
 IdP.          Exp3 ::= "IdP" Exp4 Exp4 Exp4 ;
+Nu.           Exp3 ::= "Nu" Exp4 ;
 Comp.         Exp3 ::= "comp" Exp4 Exp4 System ;
 Trans.        Exp3 ::= "transport" Exp4 Exp4 ;
 Fill.         Exp3 ::= "fill" Exp4 Exp4 System ;

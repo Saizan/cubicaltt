@@ -184,6 +184,8 @@ resolveExp e = case e of
   Lam ptele t   -> do
     tele <- flattenPTele ptele
     lams tele (resolveExp t)
+  Nu t          -> CTT.Nu <$> resolveExp t
+  Out t         -> CTT.Out <$> resolveExp t
   Fst t         -> CTT.Fst <$> resolveExp t
   Snd t         -> CTT.Snd <$> resolveExp t
   Pair t0 ts    -> do
@@ -297,6 +299,26 @@ resolveDecl d = case d of
     brs' <- local (insertVars (f:vars)) (mapM resolveBranch brs)
     body <- lams tele' (return $ CTT.Split f loc ty brs')
     return ((f,(a,body)),[(f,Variable)])
+  DeclAtIn (AIdent (l,f)) tele t i body sys -> do
+    let tele' = flattenTele tele
+        vars = map fst tele'
+    loc  <- getLoc l
+    a    <- binds CTT.Pi tele' (resolveExp t)
+    ty   <- local (insertName i . insertVars vars) $ resolveExp t
+    b <- local (insertName i . insertVars (f:vars)) (resolveExp body)
+    s <- local (insertName i . insertVars (f:vars)) (resolveSystem sys)
+    d <- lams tele' (path i (return $ CTT.In f loc b s))
+    return ((f,(a,d)),[(f,Variable)])
+  DeclIn (AIdent (l,f)) tele t body sys -> do
+    let tele' = flattenTele tele
+        vars = map fst tele'
+    loc  <- getLoc l
+    a    <- binds CTT.Pi tele' (resolveExp t)
+    b <- local (insertVars (f:vars)) (resolveExp body)
+    s <- local (insertVars (f:vars)) (resolveSystem sys)
+    d <- lams tele' (return $ CTT.In f loc b s)
+    return ((f,(a,d)),[(f,Variable)])
+
   DeclAt (AIdent (l,f)) tele t i body -> do
     let tele' = flattenTele tele
     a <- binds CTT.Pi tele' (resolveExp t)

@@ -72,6 +72,8 @@ instance Nominal Val where
     VGlue a ts              -> support (a,ts)
     VGlueElem a ts          -> support (a,ts)
     VUnGlueElem a b hs      -> support (a,b,hs)
+    VNu u                   -> support u
+    VOut u                  -> support u
 
   act u (i, phi) | i `notElem` support u = u
                  | otherwise =
@@ -79,7 +81,12 @@ instance Nominal Val where
         acti u = act u (i, phi)
         sphi = support phi
     in case u of
+         VNu u                   -> acti u
+         VOut u                  -> acti u
+
          VU           -> VU
+         Ter (In _ _ _ sys) e  | [u] <- Map.elems (act (evalSystem e sys) (i , phi)) -> u
+
          Ter t e      -> Ter t (acti e)
          VPi a f      -> VPi (acti a) (acti f)
          VComp a v ts -> compLine (acti a) (acti v) (acti ts)
@@ -143,6 +150,8 @@ eval rho v = case v of
   Pi t@(Lam _ a _)    -> VPi (eval rho a) (eval rho t)
   Sigma t@(Lam _ a _) -> VSigma (eval rho a) (eval rho t)
   Pair a b            -> VPair (eval rho a) (eval rho b)
+  Nu f                -> VNu (eval rho f)
+  Out t               -> outVal (eval rho t)
   Fst a               -> fstVal (eval rho a)
   Snd a               -> sndVal (eval rho a)
   Where t decls       -> eval (def decls rho) t
@@ -151,6 +160,10 @@ eval rho v = case v of
     pcon name (eval rho a) (map (eval rho) ts) (map (evalFormula rho) phis)
   Lam{}               -> Ter v rho
   Split{}             -> Ter v rho
+  In _ _ _ sys
+    | [u] <- Map.elems (evalSystem rho sys)
+                      -> u
+  In{}                -> Ter v rho
   Sum{}               -> Ter v rho
   HSum{}              -> Ter v rho
   Undef{}             -> Ter v rho
@@ -222,6 +235,12 @@ fstVal u               = error $ "fstVal: " ++ show u ++ " is not neutral."
 sndVal (VPair a b)     = b
 sndVal u | isNeutral u = VSnd u
 sndVal u               = error $ "sndVal: " ++ show u ++ " is not neutral."
+
+outVal :: Val -> Val
+outVal (Ter (In _ _ b sys) rho) = eval rho b
+outVal v | isNeutral v          = VOut v
+outVal u               = error $ "outVal: " ++ show u ++ " is not neutral."
+
 
 -- infer the type of a neutral value
 inferType :: Val -> Val
@@ -457,7 +476,7 @@ isoSec = fstVal . sndVal . sndVal . sndVal
 
 isoRet :: Val -> Val
 isoRet = sndVal . sndVal . sndVal . sndVal
-          
+
 -- -- Every path in the universe induces an iso
 eqToIso :: Val -> Val
 eqToIso e = VPair e1 (VPair f (VPair g (VPair s t)))
@@ -498,7 +517,7 @@ unGlue w b isos | eps `member` isos = app (isoFun (isos ! eps)) w
                 | otherwise         = case w of
                                         VGlueElem v us -> v
                                         _ -> VUnGlueElem w b isos
-            
+
 compGlue :: Name -> Val -> System Val -> Val -> System Val -> Val
 compGlue i b isos wi0 ws = glueElem vi1'' usi1''
   where bi1 = b `face` (i ~> 1)
@@ -608,6 +627,7 @@ instance Convertible Val where
         let v@(VVar n _) = mkVarNice ns x (eval e a)
         in conv (n:ns) (app u' v) (eval (upd (x,v) e) u)
       (Ter (Split _ p _ _) e,Ter (Split _ p' _ _) e') -> (p == p') && conv ns e e'
+      (Ter (In _ p _ _) e,Ter (In _ p' _ _) e') -> (p == p') && conv ns e e'
       (Ter (Sum p _ _) e,Ter (Sum p' _ _) e')         -> (p == p') && conv ns e e'
       (Ter (HSum p _ _) e,Ter (HSum p' _ _) e')       -> (p == p') && conv ns e e'
       (Ter (Undef p _) e,Ter (Undef p' _) e') -> p == p' && conv ns e e'
@@ -641,6 +661,8 @@ instance Convertible Val where
       (VGlue v isos,VGlue v' isos')          -> conv ns (v,isos) (v',isos')
       (VGlueElem u us,VGlueElem u' us')      -> conv ns (u,us) (u',us')
       (VUnGlueElem u _ _,VUnGlueElem u' _ _) -> conv ns u u'
+      (VNu u, VNu u')                        -> conv ns u u'
+      (VOut u, VOut u')                      -> conv ns u u'
       _                                      -> False
 
 instance Convertible Ctxt where

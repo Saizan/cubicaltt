@@ -138,6 +138,7 @@ check a t = case (a,t) of
     checks (bs,nu) es
   (VU,Pi f)       -> checkFam f
   (VU,Sigma f)    -> checkFam f
+  (VU,Nu f)       -> check (VPi VU (Ter (Lam "_" U U) empty)) f
   (VU,Sum _ _ bs) -> forM_ bs $ \lbl -> case lbl of
     OLabel _ tele -> checkTele tele
     PLabel _ tele is ts ->
@@ -174,6 +175,14 @@ check a t = case (a,t) of
        then sequence_ [ checkBranch (lbl,nu) f brc (Ter t rho) va
                       | (brc, lbl) <- zip ces cas ]
        else throwError "case branches does not match the data type"
+  (VNu f,In _ _ b sys) -> do
+    check (f `app` VNu f) b
+    checkSystemWith sys (\ _ -> check (VNu f))
+    rho <- asks env
+    ns <- asks names
+    checkSystemWith sys (\ fc t ->
+      unless (conv ns (outVal $ eval rho t) (eval rho b `face` fc)) $
+        throwError $ "check: system does not align")
   (VPi a f,Lam x a' t)  -> do
     check VU a'
     ns <- asks names
@@ -291,10 +300,10 @@ mkIso vb = eval rho $
     Pi (Lam "x" a $ IdP (Path (Name "_") a) (App g (App f x)) x)
   where [a,b,f,g,x,y] = map Var ["a","b","f","g","x","y"]
         rho = upd ("b",vb) emptyEnv
-        
+
 checkIso :: Val -> Ter -> Typing ()
 checkIso vb iso = check (mkIso vb) iso
-        
+
 checkBranch :: (Label,Env) -> Val -> Branch -> Val -> Val -> Typing ()
 checkBranch (OLabel _ tele,nu) f (OBranch c ns e) _ _ = do
   ns' <- asks names
@@ -384,6 +393,11 @@ infer e = case e of
         v <- evalTyping u
         return $ app f v
       _       -> throwError $ show c ++ " is not a product"
+  Out t -> do
+    c <- infer t
+    case c of
+      VNu f -> return (f `app` VNu f)
+      _     -> throwError $ show c ++ " is not a nu-type"
   Fst t -> do
     c <- infer t
     case c of
