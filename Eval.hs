@@ -68,6 +68,8 @@ instance Nominal Val where
     VGlueLineElem a phi psi -> support (a,phi,psi)
     VCompElem a es u us     -> support (a,es,u,us)
     VElimComp a es u        -> support (a,es,u)
+    VNu u                   -> support u
+    VOut u                  -> support u
 
   act u (i, phi) | i `notElem` support u = u
                  | otherwise =
@@ -75,7 +77,12 @@ instance Nominal Val where
         acti u = act u (i, phi)
         sphi = support phi
     in case u of
+         VNu u                   -> acti u
+         VOut u                  -> acti u
+
          VU           -> VU
+         Ter (In _ _ _ sys) e  | [u] <- Map.elems (act (evalSystem e sys) (i , phi)) -> u
+
          Ter t e      -> Ter t (acti e)
          VPi a f      -> VPi (acti a) (acti f)
          VComp a v ts -> compLine (acti a) (acti v) (acti ts)
@@ -144,6 +151,8 @@ eval rho v = case v of
   Pi t@(Lam _ a _)    -> VPi (eval rho a) (eval rho t)
   Sigma t@(Lam _ a _) -> VSigma (eval rho a) (eval rho t)
   Pair a b            -> VPair (eval rho a) (eval rho b)
+  Nu f                -> VNu (eval rho f)
+  Out t               -> outVal (eval rho t)
   Fst a               -> fstVal (eval rho a)
   Snd a               -> sndVal (eval rho a)
   Where t decls       -> eval (def decls rho) t
@@ -152,6 +161,10 @@ eval rho v = case v of
     pcon name (eval rho a) (map (eval rho) ts) (map (evalFormula rho) phis)
   Lam{}               -> Ter v rho
   Split{}             -> Ter v rho
+  In _ _ _ sys
+    | [u] <- Map.elems (evalSystem rho sys)
+                      -> u
+  In{}                -> Ter v rho
   Sum{}               -> Ter v rho
   Undef{}             -> Ter v rho
   Hole{}              -> Ter v rho
@@ -239,6 +252,12 @@ sndVal (VCompElem _ _ u _) = sndVal u
 sndVal u | isNeutral u = VSnd u
 sndVal u               = error $ "sndVal: " ++ show u ++ " is not neutral."
 
+outVal :: Val -> Val
+outVal (Ter (In _ _ b sys) rho) = eval rho b
+outVal v | isNeutral v          = VOut v
+outVal u               = error $ "outVal: " ++ show u ++ " is not neutral."
+
+
 -- infer the type of a neutral value
 inferType :: Val -> Val
 inferType v = case v of
@@ -302,7 +321,7 @@ transNegLine u v = transNeg i (u @@ i) v
 
 trans :: Name -> Val -> Val -> Val
 trans i v0 v1 | i `notElem` support v0 = v1
-trans i v0 v1 = case (v0,v1) of
+trans i v0 v1 = case (v0,v1) of  -- v0 is a type dep. on i,  v1 is in v0(i 0)
   (VIdP a u v,w) ->
     let j   = fresh (Atom i,v0,w)
         ts' = mkSystem [(j ~> 0,u),(j ~> 1,v)]
@@ -857,6 +876,7 @@ instance Convertible Val where
         let v@(VVar n _) = mkVarNice ns x (eval e a)
         in conv (n:ns) (app u' v) (eval (upd (x,v) e) u)
       (Ter (Split _ p _ _) e,Ter (Split _ p' _ _) e') -> (p == p') && conv ns e e'
+      (Ter (In _ p _ _) e,Ter (In _ p' _ _) e') -> (p == p') && conv ns e e'
       (Ter (Sum p _ _) e,Ter (Sum p' _ _) e')         -> (p == p') && conv ns e e'
       (Ter (Undef p _) e,Ter (Undef p' _) e') -> p == p' && conv ns e e'
       (Ter (Hole p) e,Ter (Hole p') e') -> p == p' && conv ns e e'
@@ -891,6 +911,9 @@ instance Convertible Val where
       (VCompElem a es u us,VCompElem a' es' u' us') ->
         conv ns (a,es,u,us) (a',es',u',us')
       (VElimComp a es u,VElimComp a' es' u') -> conv ns (a,es,u) (a',es',u')
+      (VNu u, VNu u')             -> conv ns u u'
+      (VOut u, VOut u')           -> conv ns u u'
+
       _                         -> False
 
 instance Convertible Ctxt where

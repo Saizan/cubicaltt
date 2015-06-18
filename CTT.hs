@@ -88,6 +88,7 @@ data Ter = App Ter Ter
          | Pair Ter Ter
          | Fst Ter
          | Snd Ter
+         | Out Ter
            -- constructor c Ms
          | Con LIdent [Ter]
          | PCon LIdent Ter [Ter] [Formula] -- c A ts phis (A is the data type)
@@ -95,7 +96,8 @@ data Ter = App Ter Ter
          | Split Ident Loc Ter [Branch]
            -- labelled sum c1 A1s,..., cn Ans (assumes terms are constructors)
          | Sum Loc Ident [Label]
-
+         | In Ident Loc Ter (System Ter) -- In def _ body sys
+         | Nu Ter                        -- Nu F
            -- undefined and holes
          | Undef Loc Ter -- Location and type
          | Hole Loc
@@ -143,6 +145,7 @@ data Val = VU
          | VPair Val Val
          | VCon LIdent [Val]
          | VPCon LIdent Val [Val] [Formula]
+         | VNu Val
 
            -- Id values
          | VIdP Val Val Val
@@ -163,6 +166,7 @@ data Val = VU
          | VElimComp Val (System Val) Val
 
            -- Neutral values:
+         | VOut Val
          | VVar Ident Val
          | VFst Val
          | VSnd Val
@@ -177,6 +181,7 @@ isNeutral v = case v of
   Ter Undef{} _     -> True
   Ter Hole{} _      -> True
   VVar _ _          -> True
+  VOut v            -> isNeutral v
   VFst v            -> isNeutral v
   VSnd v            -> isNeutral v
   VSplit _ v        -> isNeutral v
@@ -350,6 +355,9 @@ showTer v = case v of
   Pi e0              -> text "Pi" <+> showTer e0
   Lam x t e          -> text "\\ " <> parens (text x <+> colon <+> showTer t) <+>
                           text "->" <+> showTer e
+  Nu f               -> text "Nu" <+> showTer1 f
+  Out f              -> text "out" <+> showTer1 f
+  In f _ _ _         -> text f
   Fst e              -> showTer1 e <> text ".1"
   Snd e              -> showTer1 e <> text ".2"
   Sigma e0           -> text "Sigma" <+> showTer1 e0
@@ -406,6 +414,7 @@ showVal v = case v of
   VU                -> char 'U'
   Ter t@Sum{} rho   -> showTer t <+> showEnv False rho
   Ter t@Split{} rho -> showTer t <+> showEnv False rho
+  Ter t@In{} rho    -> showTer t <+> showEnv False rho
   Ter t rho         -> showTer1 t <+> showEnv True rho
   VCon c us         -> text c <+> showVals us
   VPCon c a us phis -> text c <+> braces (showVal a) <+> showVals us
@@ -418,6 +427,8 @@ showVal v = case v of
   VSigma u v        -> text "Sigma" <+> showVals [u,v]
   VApp u v          -> showVal u <+> showVal1 v
   VLam{}            -> text "\\ (" <> showLam v
+  VNu v             -> text "Nu" <+> showVal v
+  VOut v            -> text "out" <+> showVal v
   VPath{}           -> char '<' <> showPath v
   VSplit u v        -> showVal u <+> showVal1 v
   VVar x _          -> text x
