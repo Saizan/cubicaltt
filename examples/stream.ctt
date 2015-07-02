@@ -41,3 +41,21 @@ bisim (A : U) (R : (x y : Stream A) -> U) (ht : (x y : Stream A) -> R x y -> Id 
               (pt : (x y : Stream A) -> R x y -> R (tail A x) (tail A y))
               (x y : Stream A) (r : R x y) : Id (Stream A) x y
  .@ i = In (ht x y r @ i , bisim A R ht pt (tail A x) (tail A y) (pt x y r) @ i) [ (i=0) -> x, (i=1) -> y]
+
+
+nth (A : U) (xs : Stream A) : nat -> A
+ = split
+     zero -> head A xs
+     suc n -> nth A (tail A xs) n
+
+isNth (A : U) (x : A) (xs : Stream A) (n : nat) : U
+  = Id A (nth A xs n) x
+
+
+hasZeros : (n : nat) -> isNth nat zero zeros n
+ = split
+     zero -> <i> zero
+     suc n -> proof n
+
+transportExample (n : nat) : isNth nat zero (map (\ (n : nat) -> n) zeros) n
+  = transport (<i> isNth nat zero (mapid zeros @ -i) n) (hasZeros n)
