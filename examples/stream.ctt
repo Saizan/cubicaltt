@@ -55,7 +55,7 @@ isNth (A : U) (x : A) (xs : Stream A) (n : nat) : U
 hasZeros : (n : nat) -> isNth nat zero zeros n
  = split
      zero -> <i> zero
-     suc n -> proof n
+     suc n -> hasZeros n
 
 transportExample (n : nat) : isNth nat zero (map (\ (n : nat) -> n) zeros) n
   = transport (<i> isNth nat zero (mapid zeros @ -i) n) (hasZeros n)

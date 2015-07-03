@@ -138,7 +138,7 @@ check a t = case (a,t) of
     checks (bs,nu) es
   (VU,Pi f)       -> checkFam f
   (VU,Sigma f)    -> checkFam f
-  (VU,Nu f)       -> check (VPi VU (Ter (Lam "_" U U) empty)) f
+  (VU,Nu f)       -> check (VPi VU (Ter (Lam "_" U U) emptyEnv)) f
   (VU,Sum _ _ bs) -> forM_ bs $ \lbl -> case lbl of
     OLabel _ tele -> checkTele tele
     PLabel _ tele is ts ->

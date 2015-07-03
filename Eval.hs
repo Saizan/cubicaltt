@@ -238,7 +238,6 @@ sndVal u               = error $ "sndVal: " ++ show u ++ " is not neutral."
 
 outVal :: Val -> Val
 outVal (Ter (In _ _ b sys) rho) = eval rho b
-outVal (VTrans (VPath i (VNu f)) v) = trans i (f `app` VNu f) (outVal v)
 outVal (VComp (VNu f) u ts)  = compLine (f `app` VNu f) (outVal u) (Map.map outVal ts)
 outVal v | isNeutral v          = VOut v
 outVal u               = error $ "outVal: " ++ show u ++ " is not neutral."
