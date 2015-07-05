@@ -65,4 +65,4 @@ testComp : Id (Stream nat) zeros zeros
                [ (i=1) -> mapid zeros, (i=0) -> <_> zeros ]
 
 testCompHead : Id nat zero zero
-  = <i> head nat (testcomp @ i)
+  = <i> head nat (testComp @ i)
