@@ -59,3 +59,10 @@ hasZeros : (n : nat) -> isNth nat zero zeros n
 
 transportExample (n : nat) : isNth nat zero (map (\ (n : nat) -> n) zeros) n
   = transport (<i> isNth nat zero (mapid zeros @ -i) n) (hasZeros n)
+
+testComp : Id (Stream nat) zeros zeros
+  = <i> comp (<_> Stream nat) (mapid zeros @ -i)
+               [ (i=1) -> mapid zeros, (i=0) -> <_> zeros ]
+
+testCompHead : Id nat zero zero
+  = <i> head nat (testcomp @ i)
