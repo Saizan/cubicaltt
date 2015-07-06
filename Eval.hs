@@ -137,7 +137,8 @@ instance Nominal Val where
          VGlue a ts              -> VGlue (sw a) (sw ts)
          VGlueElem a ts          -> VGlueElem (sw a) (sw ts)
          VUnGlueElem a b hs      -> VUnGlueElem (sw a) (sw b) (sw hs)
-
+         VNu f                   -> VNu (sw f)
+         VOut u                  -> VOut (sw u)
 
 -----------------------------------------------------------------------
 -- The evaluator
@@ -728,6 +729,8 @@ instance Normal Val where
     VSplit u t          -> VSplit (normal ns u) (normal ns t)
     VApp u v            -> app (normal ns u) (normal ns v)
     VAppFormula u phi   -> VAppFormula (normal ns u) (normal ns phi)
+    VOut u              -> outVal (normal ns u)
+    VNu f               -> VNu (normal ns f)
     _                   -> v
 
 instance Normal Ctxt where
