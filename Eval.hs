@@ -239,8 +239,11 @@ sndVal u               = error $ "sndVal: " ++ show u ++ " is not neutral."
 
 outVal :: Val -> Val
 outVal (Ter (In _ _ b sys) rho) = eval rho b
-outVal (VComp (VPath i (VNu f)) u ts)  = comp i (f `app` VNu f) (outVal u) (Map.map (\ p -> outVal (p @@ i)) ts)
-outVal v | isNeutral v          = VOut v
+outVal v@(VComp (VPath i (VNu f)) u ts) =
+  let j  = fresh v
+      fj = f `swap` (i,j)
+  in comp j (fj `app` VNu fj) (outVal u) (Map.map (\ p -> outVal (p @@ j)) ts)
+outVal v | isNeutral v = VOut v
 outVal u               = error $ "outVal: " ++ show u ++ " is not neutral."
 
 
