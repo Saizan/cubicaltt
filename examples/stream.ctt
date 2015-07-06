@@ -18,7 +18,7 @@ tail (A : U) (xs : Stream A) : Stream A
   = (out xs).2
 
 eta (A : U) (xs : Stream A) : Id (Stream A) (cons A (head A xs) (tail A xs)) xs
- .@ i = In (out xs) [ (i=0) -> (cons A (head A xs) (tail A xs)) , (i = 1) -> xs ]
+ = <i> In (out xs) [ (i=0) -> (cons A (head A xs) (tail A xs)) , (i = 1) -> xs ]
 
 caseS (A : U) (P : Stream A -> U) (p : (n : A) (s : Stream A) -> P (cons A n s)) (s : Stream A) : P s
   = transport (<i> P (eta A s @ i)) (p (head A s) (tail A s))
@@ -31,7 +31,7 @@ map (f : nat -> nat) (s : Stream nat) : (Stream nat)
 
 
 mapid (s : Stream nat) : Id (Stream nat) (map (\ (x : nat) -> x) s) s
- .@ i = In (head nat s , mapid (tail nat s) @ i) [ (i=0) -> map (\ (x : nat) -> x) s, (i=1) -> s ]
+ = <i> In (head nat s , mapid (tail nat s) @ i) [ (i=0) -> map (\ (x : nat) -> x) s, (i=1) -> s ]
 
 zeros : Stream nat
   = In (zero , zeros) []
@@ -40,7 +40,7 @@ zeros : Stream nat
 bisim (A : U) (R : (x y : Stream A) -> U) (ht : (x y : Stream A) -> R x y -> Id A (head A x) (head A y))
               (pt : (x y : Stream A) -> R x y -> R (tail A x) (tail A y))
               (x y : Stream A) (r : R x y) : Id (Stream A) x y
- .@ i = In (ht x y r @ i , bisim A R ht pt (tail A x) (tail A y) (pt x y r) @ i) [ (i=0) -> x, (i=1) -> y]
+ = <i> In (ht x y r @ i , bisim A R ht pt (tail A x) (tail A y) (pt x y r) @ i) [ (i=0) -> x, (i=1) -> y]
 
 
 nth (A : U) (xs : Stream A) : nat -> A
