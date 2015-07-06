@@ -24,3 +24,16 @@ t1t2 : Id top t1 t2
 
 cong (A : U) (B : U) (f : A -> B) (x y : A) (p : Id A x y) : Id B (f x) (f y)
   = <i> f (p @ i)
+
+out' (F : U -> U) (x : Nu F) : F (Nu F)
+  = out x
+
+con (F : U -> U) (x : F (Nu F)) : Nu F
+ = In x []
+
+outExt (F : U -> U) (x y : Nu F) (p : Id (F (Nu F)) (out x) (out y)) : Id (Nu F) x y
+ .@ i = In (p @ i) [ (i = 0) -> x, (i = 1) -> y ]
+
+-- I get a parse error if I use In directly instead of con F.
+etanu (F : U -> U) (x : Nu F) : Id (Nu F) (con F (out x)) x
+ .@ i = In (out x) [ (i=0) -> con F (out x), (i=1) -> x ]
