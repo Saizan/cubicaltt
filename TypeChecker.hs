@@ -182,7 +182,8 @@ check a t = case (a,t) of
     ns <- asks names
     checkSystemWith sys (\ fc t ->
       unless (conv ns (outVal $ eval rho t) (eval rho b `face` fc)) $
-        throwError $ "check: system does not align")
+        throwError $ "check In: system does not align")
+    checkCompSystem (evalSystem rho sys)
   (VPi a f,Lam x a' t)  -> do
     check VU a'
     ns <- asks names
