@@ -29,6 +29,7 @@ cong (A : U) (B : U) (f : A -> B) (x y : A) (p : Id A x y) : Id B (f x) (f y)
 con (F : U -> U) (x : F (Nu F)) : Nu F
  = In x []
 
+-- Isomorphism between  Id (F (Nu F)) (out x) (out y))  and  Id (Nu F) x y
 outExt (F : U -> U) (x y : Nu F) (p : Id (F (Nu F)) (out x) (out y)) : Id (Nu F) x y
   = <i> In (p @ i) [ (i = 0) -> x, (i = 1) -> y ]
 
@@ -47,3 +48,43 @@ etanu (F : U -> U) (x : Nu F) : Id (Nu F) (con F (out x)) x
 outExtPath (F : U -> U) (x y : Nu F) (p q : Id (Nu F) x y) (s : Id (Id (F (Nu F)) (out x) (out y)) (<i> out (p @ i)) (<i> out (q @ i)))
            : Id (Id (Nu F) x y) p q
   = <i j> In (s @ i @ j) [ (i=0) -> p @ j, (i=1) -> q @ j, (j=0) -> x, (j=1) -> y ]
+
+-- Strictly positive functors as containers
+Sem (S : U) (P : S -> U) (X : U) : U
+  = (s : S) * (P s -> X)
+
+-- lemmas
+pair (S : U) (P : S -> U) (p q : (s : S) * P s) (eq0 : Id S p.1 q.1) (eq1 : IdP (<i> P (eq0 @ i)) p.2 q.2) : Id ((s : S) * P s) p q
+ = <i> (eq0 @ i, eq1 @ i)
+
+funExt2 (A B C : U) (p : Id U A B) (f : A -> C) (g : B -> C) (eq : (a : A) (b : B) -> IdP p a b -> Id C (f a) (g b))
+         : IdP (<i> p @ i -> C) f g
+  = J U A (\ (B : U) (p : Id U A B) -> (g : B -> C) (eq : (a : A) (b : B) -> IdP p a b -> Id C (f a) (g b)) -> IdP (<i> p @ i -> C) f g)
+          (\ (g : A -> C) (eq : (a b : A) -> Id A a b -> Id C (f a) (g b)) -> <i> (\ (x : A) -> eq x x (<_> x) @ i)) B p g eq
+
+semExt (S : U) (P : S -> U) (X : U) (x y : Sem S P X) (s : Id S x.1 y.1)
+       (f : (p : P x.1) -> (q : P y.1) -> IdP (<i> P (s @ i)) p q -> Id X (x.2 p) (y.2 q))
+       : Id (Sem S P X) x y
+  = pair S (\ (s : S) -> P s -> X) x y s (funExt2 (P x.1) (P y.1) X (<i> P (s @ i)) x.2 y.2 f)
+
+-- Coinductive type from a container
+NuC (S : U) (P : S -> U) : U
+ = Nu (Sem S P)
+
+shape (S : U) (P : S -> U) (x : NuC S P) : S
+  = (out x).1
+
+sub (S : U) (P : S -> U) (x : NuC S P) : P (shape S P x) -> NuC S P
+  = (out x).2
+
+-- Bisimulation principle for containers
+bisimNu (S : U) (P : S -> U) (R : (x y : NuC S P) -> U)
+        (sp : (x y : NuC S P) -> R x y -> Id S (shape S P x) (shape S P y))
+        (su : (x y : NuC S P) -> (r : R x y) -> (p : P (shape S P x)) (q : P (shape S P y))
+              -> IdP (<i> P (sp x y r @ i)) p q -> R (sub S P x p) (sub S P y q))
+        (x y : NuC S P) (r : R x y) : Id (NuC S P) x y
+  = <i> In (semExt S P (NuC S P) (out x) (out y) (sp x y r)
+               (\ (p : P (shape S P x)) (q : P (shape S P y)) (eq : IdP (<i> P (sp x y r @ i)) p q)
+                   -> bisimNu S P R sp su (sub S P x p) (sub S P y q) (su x y r p q eq))
+             @ i)
+           [ (i=0) -> x, (i=1) -> y ]
