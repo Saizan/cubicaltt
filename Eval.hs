@@ -85,7 +85,7 @@ instance Nominal Val where
          VOut u                  -> VOut (acti u)
 
          VU           -> VU
-         Ter (In _ _ _ sys) e  | [u] <- Map.elems (act (evalSystem e sys) (i , phi)) -> u
+         Ter (In _ _ _ sys) e  | Just u <- act (evalSystem e sys) (i , phi) `maybeProj` eps -> u
 
          Ter t e      -> Ter t (acti e)
          VPi a f      -> VPi (acti a) (acti f)
@@ -162,7 +162,7 @@ eval rho v = case v of
   Lam{}               -> Ter v rho
   Split{}             -> Ter v rho
   In _ _ _ sys
-    | [u] <- Map.elems (evalSystem rho sys)
+    | Just u <- evalSystem rho sys `maybeProj` eps
                       -> u
   In{}                -> Ter v rho
   Sum{}               -> Ter v rho

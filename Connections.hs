@@ -453,6 +453,9 @@ leqSystem :: Face -> System a -> Bool
 alpha `leqSystem` us =
   not $ Map.null $ filterWithKey (\beta _ -> alpha `leq` beta) us
 
+maybeProj :: Nominal a => System a -> Face -> Maybe a
+maybeProj us alpha = Map.lookup eps (us `face` alpha)
+
 -- assumes alpha <= shape us
 proj :: (Nominal a, Show a) => System a -> Face -> a
 proj us alpha | eps `member` usalpha = usalpha ! eps
