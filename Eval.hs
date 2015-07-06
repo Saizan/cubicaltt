@@ -81,8 +81,8 @@ instance Nominal Val where
         acti u = act u (i, phi)
         sphi = support phi
     in case u of
-         VNu u                   -> acti u
-         VOut u                  -> acti u
+         VNu u                   -> VNu (acti u)
+         VOut u                  -> VOut (acti u)
 
          VU           -> VU
          Ter (In _ _ _ sys) e  | [u] <- Map.elems (act (evalSystem e sys) (i , phi)) -> u
