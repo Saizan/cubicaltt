@@ -177,11 +177,11 @@ check a t = case (a,t) of
        else throwError "case branches does not match the data type"
   (VNu f,In _ _ b sys) -> do
     check (f `app` VNu f) b
-    checkSystemWith sys (\ _ -> check (VNu f))
+    checkSystemWith sys (\ alpha -> check (VNu f `face` alpha))
     rho <- asks env
     ns <- asks names
     checkSystemWith sys (\ fc t ->
-      unless (conv ns (outVal $ eval rho t) (eval rho b `face` fc)) $
+      unless (conv ns (outVal $ eval (rho `face` fc) t) (eval rho b `face` fc)) $
         throwError $ "check In: system does not align")
     checkCompSystem (evalSystem rho sys)
   (VPi a f,Lam x a' t)  -> do
