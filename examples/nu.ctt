@@ -13,11 +13,11 @@ t2 : Nu (\ (X : U) -> X)
 
 -- fails
 -- t1t2 : Id top t1 t2
---   .@ i = In (t1t2 @ -i) [ (i=0) -> t1, (i = 1) -> t2 ]
+--   = <i> In (t1t2 @ -i) [ (i=0) -> t1, (i = 1) -> t2 ]
 -- t1t2 : Id top t1 t2
---   .@ i = In (t1t2 @ i) [ (i=0) -> t2, (i = 1) -> t1 ]
+--   = <i> In (t1t2 @ i) [ (i=0) -> t2, (i = 1) -> t1 ]
 -- t1t2 : Id top t1 t2
---   .@ i = t1
+--   = <i> t1
 
 t1t2 : Id top t1 t2
   = <i> In (t1t2 @ i) [ (i=0) -> t1, (i = 1) -> t2 ]
