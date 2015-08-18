@@ -48,6 +48,17 @@ nth (A : U) (xs : Stream A) : nat -> A
      zero -> head A xs
      suc n -> nth A (tail A xs) n
 
+tabulate (A : U) (f : nat -> A) : Stream A
+  = In (f zero , tabulate A (\ (n : nat) -> f (suc n))) []
+
+tabnth (A : U) (f : nat -> A) : (n : nat) -> Id A (nth A (tabulate A f) n) (f n)
+  = split
+      zero -> <i> f zero
+      suc n -> tabnth A (\ (n : nat) -> f (suc n)) n
+
+nthtab (A : U) (xs : Stream A) : Id (Stream A) (tabulate A (nth A xs)) xs
+  = <i> In (head A xs, nthtab A (tail A xs) @ i) [ (i=0) -> (tabulate A (nth A xs)) , (i=1) -> xs ]
+
 isNth (A : U) (x : A) (xs : Stream A) (n : nat) : U
   = Id A (nth A xs n) x
 
@@ -66,3 +77,5 @@ testComp : Id (Stream nat) zeros zeros
 
 testCompHead : Id nat zero zero
   = <i> head nat (testComp @ i)
+
+
