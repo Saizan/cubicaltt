@@ -2,6 +2,9 @@ module nu where
 
 import prelude
 
+cong (A : U) (B : U) (f : A -> B) (x y : A) (p : Id A x y) : Id B (f x) (f y)
+  = <i> f (p @ i)
+
 top : U
    = Nu (\ (X : U) -> X)
 
@@ -11,6 +14,9 @@ t1 : Nu (\ (X : U) -> X)
 t2 : Nu (\ (X : U) -> X)
    = In t2 []
 
+t1t2 : Id top t1 t2
+  = <i> In (t1t2 @ i) [ (i=0) -> t1, (i = 1) -> t2 ]
+
 -- fails
 -- t1t2 : Id top t1 t2
 --   = <i> In (t1t2 @ -i) [ (i=0) -> t1, (i = 1) -> t2 ]
@@ -19,15 +25,13 @@ t2 : Nu (\ (X : U) -> X)
 -- t1t2 : Id top t1 t2
 --   = <i> t1
 
-t1t2 : Id top t1 t2
-  = <i> In (t1t2 @ i) [ (i=0) -> t1, (i = 1) -> t2 ]
-
-cong (A : U) (B : U) (f : A -> B) (x y : A) (p : Id A x y) : Id B (f x) (f y)
-  = <i> f (p @ i)
 
 -- In is only allowed right after =, so we have con as an alias.
 con (F : U -> U) (x : F (Nu F)) : Nu F
  = In x []
+
+etanu (F : U -> U) (x : Nu F) : Id (Nu F) (con F (out x)) x
+  = <i> In (out x) [ (i=0) -> con F (out x), (i=1) -> x ]
 
 -- Isomorphism between  Id (F (Nu F)) (out x) (out y))  and  Id (Nu F) x y
 outExt (F : U -> U) (x y : Nu F) (p : Id (F (Nu F)) (out x) (out y)) : Id (Nu F) x y
@@ -42,8 +46,6 @@ isoExt1 (F : U -> U) (x y : Nu F) (p : Id (F (Nu F)) (out x) (out y)) : Id (Id (
 isoExt2 (F : U -> U) (x y : Nu F) (p : Id (Nu F) x y) : Id (Id (Nu F) x y) p (outExt F x y (outExtInv F x y p))
   = <i j> In (out (p @ j)) [ (i=0) -> p @ j, (i=1) -> outExt F x y (outExtInv F x y p) @ j, (j=0) -> x, (j=1) -> y ]
 
-etanu (F : U -> U) (x : Nu F) : Id (Nu F) (con F (out x)) x
-  = <i> In (out x) [ (i=0) -> con F (out x), (i=1) -> x ]
 
 outExtPath (F : U -> U) (x y : Nu F) (p q : Id (Nu F) x y) (s : Id (Id (F (Nu F)) (out x) (out y)) (<i> out (p @ i)) (<i> out (q @ i)))
            : Id (Id (Nu F) x y) p q

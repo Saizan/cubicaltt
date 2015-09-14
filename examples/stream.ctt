@@ -18,12 +18,9 @@ tail (A : U) (xs : Stream A) : Stream A
   = (out xs).2
 
 eta (A : U) (xs : Stream A) : Id (Stream A) (cons A (head A xs) (tail A xs)) xs
- = <i> In (out xs) [ (i=0) -> (cons A (head A xs) (tail A xs)) , (i = 1) -> xs ]
+ = <i> In (out xs) [ (i=0) -> cons A (head A xs) (tail A xs) , (i=1) -> xs ]
 
 caseS (A : U) (P : Stream A -> U) (p : (n : A) (s : Stream A) -> P (cons A n s)) (s : Stream A) : P s
-  = transport (<i> P (eta A s @ i)) (p (head A s) (tail A s))
-
-splitS (A : U) (s : Stream A) (P : Stream A -> U) (p : (n : A) (s : Stream A) -> P (cons A n s)) : P s
   = transport (<i> P (eta A s @ i)) (p (head A s) (tail A s))
 
 map (f : nat -> nat) (s : Stream nat) : (Stream nat)
@@ -62,7 +59,6 @@ nthtab (A : U) (xs : Stream A) : Id (Stream A) (tabulate A (nth A xs)) xs
 isNth (A : U) (x : A) (xs : Stream A) (n : nat) : U
   = Id A (nth A xs n) x
 
-
 hasZeros : (n : nat) -> isNth nat zero zeros n
  = split
      zero -> <i> zero
@@ -70,6 +66,9 @@ hasZeros : (n : nat) -> isNth nat zero zeros n
 
 transportExample (n : nat) : isNth nat zero (map (\ (n : nat) -> n) zeros) n
   = transport (<i> isNth nat zero (mapid zeros @ -i) n) (hasZeros n)
+
+testTransp : Id nat zero zero
+  = transportExample (suc (suc zero))
 
 testComp : Id (Stream nat) zeros zeros
   = <i> comp (<_> Stream nat) (mapid zeros @ -i)
